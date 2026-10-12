@@ -17,7 +17,7 @@ curl -fsSL https://raw.githubusercontent.com/VishiATChoudhary/freebies/main/inst
 or, with Node.js 22 or newer:
 
 ```sh
-npm install -g freebies
+npm install -g https://github.com/VishiATChoudhary/freebies/releases/latest/download/freebies.tgz
 ```
 
 Then run `freebies`. The first launch walks you through setting up the details that go on your invoices. After that, `freebies` opens a home screen with your open invoices and unsorted bank transactions, and `freebies app` opens the web app.
