@@ -25,4 +25,17 @@ export function registerInvoices(program: Command): void {
   g.command("list").action(() => { try { const ctx = loadContext(program.opts()); emit(new InvoicesRepo(ctx.db).list(), ctx); } catch (e) { fail(e); } });
   g.command("get <id>").action((id) => { try { const ctx = loadContext(program.opts()); const r = new InvoicesRepo(ctx.db); const inv = r.get(id); emit({ ...inv, totals: invoiceTotals(inv.items) }, ctx); } catch (e) { fail(e); } });
   g.command("status <id> <status>").action((id, status) => { try { const ctx = loadContext(program.opts()); emit(new InvoicesRepo(ctx.db).setStatus(id, status), ctx); } catch (e) { fail(e); } });
+  g.command("pdf <id>").option("--out <path>")
+    .action(async (id, o) => {
+      try {
+        const ctx = loadContext(program.opts());
+        const inv = new InvoicesRepo(ctx.db).get(id);
+        const { ClientsRepo } = await import("../db/repositories/clients.js");
+        const client = new ClientsRepo(ctx.db).get(inv.client_id);
+        const out = o.out ?? `${ctx.dataDir}/files/${inv.number}.pdf`;
+        const { renderInvoicePdf } = await import("../pdf/invoice.js");
+        await renderInvoicePdf(inv, client, out);
+        emit({ path: out }, ctx);
+      } catch (e) { fail(e); }
+    });
 }
