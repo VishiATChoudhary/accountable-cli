@@ -8,7 +8,7 @@ import { emit } from "../output/render.js";
 import { AppError, fail } from "../output/errors.js";
 
 const ItemSchema = z.object({ description: z.string(), quantity: z.number().int(), unit_price_cents: z.number().int(), vat_bp: z.number().int() });
-const CreateSchema = z.object({ client_id: z.string(), issue_date: z.string(), due_date: z.string().optional(), notes: z.string().optional(), items: z.array(ItemSchema).min(1) });
+const CreateSchema = z.object({ client_id: z.string(), issue_date: z.string(), due_date: z.string().optional(), delivery_date: z.string().optional(), notes: z.string().optional(), items: z.array(ItemSchema).min(1) });
 
 export function registerInvoices(program: Command): void {
   const g = program.command("invoices").description("manage invoices");
@@ -40,6 +40,6 @@ export function registerInvoices(program: Command): void {
         emit({ path: out }, ctx);
       } catch (e) { fail(e); }
     });
-  g.command("edit <id>").option("--due-date <d>").option("--notes <n>").option("--issue-date <d>")
-    .action((id, o) => { try { const ctx = loadContext(program.opts()); emit(new InvoicesRepo(ctx.db).edit(id, { due_date: o.dueDate, notes: o.notes, issue_date: o.issueDate }), ctx); } catch (e) { fail(e); } });
+  g.command("edit <id>").option("--due-date <d>").option("--delivery-date <d>").option("--notes <n>").option("--issue-date <d>")
+    .action((id, o) => { try { const ctx = loadContext(program.opts()); emit(new InvoicesRepo(ctx.db).edit(id, { due_date: o.dueDate, delivery_date: o.deliveryDate, notes: o.notes, issue_date: o.issueDate }), ctx); } catch (e) { fail(e); } });
 }

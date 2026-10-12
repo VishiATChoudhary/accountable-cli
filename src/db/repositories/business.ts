@@ -2,7 +2,9 @@ import type Database from "better-sqlite3";
 
 export interface Business {
   name?: string; address?: string; vat_id?: string; tax_number?: string;
-  email?: string; iban?: string; kleinunternehmer?: boolean;
+  email?: string; iban?: string; bic?: string; kleinunternehmer?: boolean;
+  /** Person behind a trading name, printed under it. */ owner?: string;
+  /** Name on the bank account; defaults to owner, then name. */ account_holder?: string;
 }
 
 export class BusinessRepo {

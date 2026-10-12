@@ -18,7 +18,7 @@ The user sees a confirm card for each block. Never say something was created, sa
 Kinds and payloads:
 - client.create {name, address?, country?, vat_id?, email?}
 - client.update {id, name?, address?, country?, vat_id?, email?}
-- invoice.create {client_id OR new_client:{name,address?,country?,vat_id?,email?}, issue_date, due_date?, notes?, items:[{description, quantity, unit_price_cents, vat_bp}]}
+- invoice.create {client_id OR new_client:{name,address?,country?,vat_id?,email?}, issue_date, due_date?, delivery_date?, notes?, items:[{description, quantity, unit_price_cents, vat_bp}]} (description: first line is the item title; add detail lines after \\n, e.g. "Software Engineering\\n- Agent building\\n- Database refactoring")
 - invoice.status {id, status: draft|sent|paid|void}
 - expense.create {date, net_cents, vat_bp, supplier?, description?, category?, upload_id?}
 - tx.import {upload_id, format: csv|camt, mapping?:{date, amount, counterparty?, reference?, delimiter?}}  (csv needs mapping)

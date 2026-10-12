@@ -24,7 +24,7 @@ const mapping = z.object({ date: z.string(), amount: z.string(), counterparty: z
 export const SCHEMAS = {
   "client.create": z.object(clientFields).strict(),
   "client.update": z.object({ id: z.string(), ...Object.fromEntries(Object.entries(clientFields).map(([k, v]) => [k, (v as z.ZodTypeAny).optional()])) }).strict(),
-  "invoice.create": z.object({ client_id: z.string().optional(), new_client: z.object(clientFields).strict().optional(), issue_date: date, due_date: date.optional(), notes: z.string().optional(), items: z.array(item).min(1) }).strict(),
+  "invoice.create": z.object({ client_id: z.string().optional(), new_client: z.object(clientFields).strict().optional(), issue_date: date, due_date: date.optional(), delivery_date: date.optional(), notes: z.string().optional(), items: z.array(item).min(1) }).strict(),
   "invoice.status": z.object({ id: z.string(), status: z.enum(INVOICE_STATUSES) }).strict(),
   "expense.create": z.object({ date, net_cents: cents, vat_bp: z.number().int().min(0).max(10000), supplier: z.string().optional(), description: z.string().optional(), category: z.string().optional(), upload_id: z.string().optional() }).strict(),
   "tx.import": z.object({ upload_id: z.string(), format: z.enum(["csv", "camt"]), mapping: mapping.optional() }).strict(),

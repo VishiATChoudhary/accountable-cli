@@ -106,7 +106,7 @@ export function createApp(opts: { dataDir: string; runTurn: RunTurn; webDist?: s
   // Business identity
   app.get("/api/business", (c) => c.json(new BusinessRepo(db).get()));
   app.put("/api/business", async (c) => {
-    const body = parse(z.object({ name: z.string().optional(), address: z.string().optional(), vat_id: z.string().optional(), tax_number: z.string().optional(), email: z.string().optional(), iban: z.string().optional(), kleinunternehmer: z.boolean().optional() }).strict(), await c.req.json());
+    const body = parse(z.object({ name: z.string().optional(), address: z.string().optional(), vat_id: z.string().optional(), tax_number: z.string().optional(), email: z.string().optional(), iban: z.string().optional(), bic: z.string().optional(), owner: z.string().optional(), account_holder: z.string().optional(), kleinunternehmer: z.boolean().optional() }).strict(), await c.req.json());
     return c.json(new BusinessRepo(db).set(body));
   });
 

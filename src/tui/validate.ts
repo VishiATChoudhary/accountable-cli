@@ -13,5 +13,6 @@ export const iban: Check = (v) => {
   for (const d of digits) rem = (rem * 10 + Number(d)) % 97;
   return rem === 1 ? null : "That IBAN's check digits don't add up. Check for a typo.";
 };
+export const bic: Check = (v) => (!v.trim() || /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(v.replace(/\s+/g, "").toUpperCase()) ? null : "That doesn't look like a BIC (e.g. BYLADEM1001).");
 export const vatId: Check = (v) => (!v.trim() || /^[A-Z]{2}[A-Z0-9]{8,12}$/.test(v.replace(/\s+/g, "").toUpperCase()) ? null : "That doesn't look like a VAT ID (e.g. DE123456789).");
 export const email: Check = (v) => (!v.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? null : "That doesn't look like an email address.");

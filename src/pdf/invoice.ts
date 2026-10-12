@@ -19,8 +19,9 @@ const PAGE = "#FFFFFF";       // white page: prints cleanly, no ink on the backg
 const W = 595.28, H = 841.89;
 const M = 56;                  // side margin
 const CW = W - 2 * M;          // content width
-const BAND = 118;              // engraved band height
-const LIMIT = H - BAND - 64;   // lowest y for content
+const BAND = 96;               // engraved band height
+const BOX = 72;                // payment box above the band
+const LIMIT = H - BAND - BOX - 34; // lowest y for content
 
 const FONT_DIR = (() => {
   const here = dirname(fileURLToPath(import.meta.url));
@@ -42,8 +43,22 @@ function hasGlyph(subset: "latin" | "latin-ext", face: Face, cp: number): boolea
 }
 
 const dateDe = (iso?: string | null) => (iso ? new Date(iso + "T00:00:00").toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }) : "");
+const countries = new Intl.DisplayNames(["de"], { type: "region" });
+const countryName = (c?: string | null) => (c && /^[A-Za-z]{2}$/.test(c) ? countries.of(c.toUpperCase()) ?? c : c ?? undefined);
 const qtyDe = (q: number) => (q / 1000).toLocaleString("de-DE", { maximumFractionDigits: 3 });
 const lineNet = (i: InvoiceItemInput) => Math.round((i.quantity * i.unit_price_cents) / 1000);
+
+/** Bank lines for the payment box. Empty without an IBAN, so no half-filled box is printed. */
+export function paymentDetails(business: Business, invoice: Pick<Invoice, "number">): [string, string][] {
+  if (!business.iban) return [];
+  const holder = business.account_holder || business.owner || business.name;
+  return [
+    ...(holder ? [["Kontoinhaber", holder] as [string, string]] : []),
+    ["IBAN", business.iban],
+    ...(business.bic ? [["BIC", business.bic] as [string, string]] : []),
+    ["Verwendungszweck", invoice.number],
+  ];
+}
 
 interface Style { face?: Face; size?: number; opacity?: number; color?: string; caps?: boolean; tracking?: number }
 
@@ -135,11 +150,16 @@ export function renderInvoicePdf(
       doc.restore();
     };
     const footer = (page: number, total: number) => {
-      const bits = [business.name, business.tax_number && `St.-Nr. ${business.tax_number}`, business.vat_id && `USt-IdNr. ${business.vat_id}`, business.email, business.iban && `IBAN ${business.iban}`].filter(Boolean) as string[];
-      const y = H - BAND - 30;
-      rule(M, y - 10, W - M, 0.18);
-      if (bits.length) put(bits.join("    /    "), M, y, { size: 8, opacity: 0.7 }, "center", CW);
-      if (total > 1) put(`${page} / ${total}`, M, y + 13, { size: 7.5, opacity: 0.5 }, "center", CW);
+      const y0 = H - BAND - BOX - 12;
+      doc.save().roundedRect(M, y0, CW, BOX, 6).fillColor(INK).fillOpacity(0.045).fill().restore();
+      const pay = paymentDetails(business, invoice);
+      const left = pay.length
+        ? pay.map(([k, v]) => `${k}: ${k === "IBAN" ? v.replace(/ /g, " ") : v}`)
+        : [business.name, business.tax_number && `St.-Nr. ${business.tax_number}`].filter(Boolean) as string[];
+      const ly = y0 + (BOX - left.length * 13.5) / 2 + 1;
+      left.forEach((l, i) => put(l, M + 16, ly + i * 13.5, { size: 9.5, face: "medium" }));
+      if (business.email) put(business.email, M, y0 + BOX / 2 - 12, { size: 9.5, face: "medium" }, "right", CW - 16);
+      put(`Seite ${page}/${total}`, M, y0 + BOX / 2 + 4, { size: 9, opacity: 0.6 }, "right", CW - 16);
     };
 
     let y = M;
@@ -150,29 +170,14 @@ export function renderInvoicePdf(
     };
     background();
 
-    // ---- header: seller (left), document title (right) ----
-    const sellerName = business.name || "Rechnung";
-    put(sellerName, M, y - 4, { face: "italic", size: 25 });
-    put("Rechnung", M, y + 2, { caps: true, size: 11, face: "medium" }, "right", CW);
-    rule(W - M - 22, y + 18, W - M, 1, 0.8);
-    y += 34;
-    if (business.address) { put(business.address.split(/\r?\n/).join(", "), M, y, { size: 9.5, opacity: 0.68 }); y += 13; }
-    y += 18;
-
-    // ---- parties (left) + details table (right) ----
-    const colR = M + CW * 0.56, colRW = W - M - colR;
-    let yl = y;
-    put("Rechnung an", M, yl, { caps: true, size: 9.5, opacity: 0.6 }); yl += 16;
-    put(client.name, M, yl, { size: 13, face: "medium" }); yl += 18;
-    for (const line of (client.address ?? "").split(/\r?\n/).filter(Boolean)) for (const l of wrap(line, colR - M - 24, { size: 10 })) { put(l, M, yl, { size: 10 }); yl += 14; }
-    if (client.country) { put(client.country, M, yl, { size: 10 }); yl += 14; }
-    if (client.vat_id) { put(`USt-IdNr. ${client.vat_id}`, M, yl, { size: 9.5, opacity: 0.68 }); yl += 14; }
-
+    // ---- header: seller and invoice number (left), dates table (right) ----
+    put(business.name || "Rechnung", M, y - 4, { face: "italic", size: 25 });
+    put(`Rechnung ${invoice.number}`, M, y + 30, { caps: true, size: 11, face: "medium" });
+    const colRW = 190, colR = W - M - colRW;
     let yr = y;
     const details: [string, string][] = [
-      ["Rechnungsnummer", invoice.number],
       ["Rechnungsdatum", dateDe(invoice.issue_date)],
-      ["Leistungsdatum", dateDe(invoice.issue_date)],
+      ["Leistungsdatum", dateDe(invoice.delivery_date || invoice.issue_date)],
       ...(invoice.due_date ? [["Fällig am", dateDe(invoice.due_date)] as [string, string]] : []),
     ];
     rule(colR, yr - 5, W - M, 0.5, 0.7);
@@ -182,7 +187,27 @@ export function renderInvoicePdf(
       yr += 20;
       rule(colR, yr - 5, W - M, 0.18);
     }
-    y = Math.max(yl, yr) + 26;
+    y = Math.max(y + 48, yr) + 22;
+
+    // ---- parties: tinted box, recipient (left) and sender (right) ----
+    type Line = { text: string; s: Style; gap?: number };
+    const colW = CW / 2 - 28;
+    const block = (head: string, name: string, rest: (string | false | undefined)[], extra: (string | false | undefined)[]): Line[] => {
+      const out: Line[] = [{ text: head, s: { caps: true, size: 9.5, opacity: 0.6 } }, { text: name, s: { size: 14, face: "medium" }, gap: 4 }];
+      for (const r of rest.filter(Boolean) as string[]) for (const l of r.split(/\r?\n/).filter(Boolean)) for (const w of wrap(l, colW, { size: 10 })) out.push({ text: w, s: { size: 10 } });
+      extra.filter(Boolean).forEach((e, i) => out.push({ text: e as string, s: { size: 9.5, opacity: 0.72 }, gap: i ? 0 : 6 }));
+      return out;
+    };
+    const to = block("Rechnung an", client.name, [client.address, countryName(client.country)], [client.vat_id && `USt-IdNr. ${client.vat_id}`]);
+    const from = block("Von", business.name || "", [business.owner, business.address],
+      [business.tax_number && `Steuernummer ${business.tax_number}`, business.vat_id && `USt-IdNr. ${business.vat_id}`]);
+    const height = (ls: Line[]) => ls.reduce((h, l) => h + lh(l.s) + (l.gap ?? 0), 0);
+    const boxH = Math.max(height(to), business.name ? height(from) : 0) + 30;
+    doc.save().roundedRect(M, y, CW, boxH, 6).fillColor(INK).fillOpacity(0.045).fill().restore();
+    const draw = (ls: Line[], x: number) => { let yy = y + 16; for (const l of ls) { yy += l.gap ?? 0; put(l.text, x, yy, l.s); yy += lh(l.s); } };
+    draw(to, M + 16);
+    if (business.name) draw(from, M + CW / 2 + 12);
+    y += boxH + 26;
 
     // ---- line items table ----
     const cols = [
@@ -199,11 +224,14 @@ export function renderInvoicePdf(
     };
     tableHead();
     invoice.items.forEach((it, i) => {
-      const descLines = wrap(it.description, cols[0].w, { size: 10.5 });
-      const rowH = Math.max(26, descLines.length * lh({ size: 10.5 }) + 12);
+      const [title, ...more] = it.description.split(/\r?\n/);
+      const T: Style = { size: 10.5, face: "medium" }, D: Style = { size: 9.5, opacity: 0.78 };
+      const descLines = [...wrap(title, cols[0].w, T).map((text) => ({ text, s: T })), ...more.flatMap((m) => wrap(m, cols[0].w, D).map((text) => ({ text, s: D })))];
+      const rowH = Math.max(26, descLines.reduce((h, l) => h + lh(l.s), 0) + 12);
       if (y + rowH > LIMIT) { newPage(); tableHead(); }
       if (i % 2 === 1) doc.save().rect(M, y, CW, rowH).fillColor(INK).fillOpacity(0.035).fill().restore();
-      descLines.forEach((l, k) => put(l, cols[0].x, y + 7 + k * lh({ size: 10.5 }), { size: 10.5 }));
+      let dy = y + 7;
+      for (const l of descLines) { put(l.text, cols[0].x, dy, l.s); dy += lh(l.s); }
       put(qtyDe(it.quantity), cols[1].x, y + 7, { size: 10.5 }, "right", cols[1].w);
       put(formatEuro(it.unit_price_cents), cols[2].x, y + 7, { size: 10.5 }, "right", cols[2].w);
       put(`${(it.vat_bp / 100).toLocaleString("de-DE")} %`, cols[3].x, y + 7, { size: 10.5, opacity: 0.7 }, "right", cols[3].w);
@@ -241,7 +269,7 @@ export function renderInvoicePdf(
     const due = invoice.due_date ? ` bis zum ${dateDe(invoice.due_date)}` : "";
     paras.push({
       text: business.iban
-        ? `Bitte überweisen Sie ${formatEuro(t.grossCents)}${due} auf das Konto ${business.iban.replace(/ /g, "\u00a0")}${business.name ? ` (${business.name})` : ""} unter Angabe der Rechnungsnummer ${invoice.number}.`
+        ? `Bitte überweisen Sie ${formatEuro(t.grossCents)}${due} auf das unten genannte Konto, mit der Rechnungsnummer ${invoice.number} als Verwendungszweck.`
         : `Zahlbar${due || " sofort"} unter Angabe der Rechnungsnummer ${invoice.number}.`,
       s: { size: 10.5 },
     });

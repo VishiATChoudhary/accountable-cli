@@ -5,10 +5,10 @@ import { InvoiceItemInput, INVOICE_STATUSES, InvoiceStatus } from "../../domain/
 
 export interface Invoice {
   id: string; number: string; client_id: string; issue_date: string;
-  due_date?: string; status: InvoiceStatus; currency: string; notes?: string; created_at: string;
+  due_date?: string; delivery_date?: string; status: InvoiceStatus; currency: string; notes?: string; created_at: string;
 }
 export interface CreateInvoiceInput {
-  client_id: string; issue_date: string; due_date?: string; notes?: string; items: InvoiceItemInput[];
+  client_id: string; issue_date: string; due_date?: string; delivery_date?: string; notes?: string; items: InvoiceItemInput[];
 }
 
 export function nextNumber(db: Database.Database, metaKey: string, prefix: string): string {
@@ -31,11 +31,11 @@ export class InvoicesRepo {
     const create = this.db.transaction((): Invoice => {
       const inv: Invoice = {
         id: newId(), number: nextNumber(this.db, "invoice_number_sequence", year),
-        client_id: input.client_id, issue_date: input.issue_date, due_date: input.due_date,
+        client_id: input.client_id, issue_date: input.issue_date, due_date: input.due_date, delivery_date: input.delivery_date,
         status: "draft", currency: "EUR", notes: input.notes, created_at: new Date().toISOString(),
       };
-      this.db.prepare("INSERT INTO invoices (id,number,client_id,issue_date,due_date,status,currency,notes,created_at) VALUES (@id,@number,@client_id,@issue_date,@due_date,@status,@currency,@notes,@created_at)")
-        .run({ due_date: null, notes: null, ...inv });
+      this.db.prepare("INSERT INTO invoices (id,number,client_id,issue_date,due_date,delivery_date,status,currency,notes,created_at) VALUES (@id,@number,@client_id,@issue_date,@due_date,@delivery_date,@status,@currency,@notes,@created_at)")
+        .run({ ...inv, due_date: inv.due_date ?? null, delivery_date: inv.delivery_date ?? null, notes: inv.notes ?? null });
       input.items.forEach((it, idx) => {
         this.db.prepare("INSERT INTO invoice_items (id,invoice_id,description,quantity,unit_price_cents,vat_bp,position) VALUES (?,?,?,?,?,?,?)")
           .run(newId(), inv.id, it.description, it.quantity, it.unit_price_cents, it.vat_bp, idx);
@@ -51,10 +51,10 @@ export class InvoicesRepo {
     return { ...inv, items };
   }
   list(): Invoice[] { return this.db.prepare("SELECT * FROM invoices ORDER BY number").all() as Invoice[]; }
-  edit(id: string, patch: { due_date?: string; notes?: string; issue_date?: string }): Invoice & { items: InvoiceItemInput[] } {
+  edit(id: string, patch: { due_date?: string; delivery_date?: string; notes?: string; issue_date?: string }): Invoice & { items: InvoiceItemInput[] } {
     const cur = this.get(id);
-    const next = { due_date: patch.due_date ?? cur.due_date ?? null, notes: patch.notes ?? cur.notes ?? null, issue_date: patch.issue_date ?? cur.issue_date, id };
-    this.db.prepare("UPDATE invoices SET due_date=@due_date, notes=@notes, issue_date=@issue_date WHERE id=@id").run(next);
+    const next = { due_date: patch.due_date ?? cur.due_date ?? null, notes: patch.notes ?? cur.notes ?? null, issue_date: patch.issue_date ?? cur.issue_date, delivery_date: patch.delivery_date ?? cur.delivery_date ?? null, id };
+    this.db.prepare("UPDATE invoices SET due_date=@due_date, delivery_date=@delivery_date, notes=@notes, issue_date=@issue_date WHERE id=@id").run(next);
     return this.get(id);
   }
   setStatus(id: string, status: string): Invoice {
