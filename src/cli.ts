@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { VERSION } from "./version.js";
+import { registerClients } from "./commands/clients.js";
 
-// --version flag: emit JSON and exit before commander parses.
 if (process.argv.includes("--version")) {
   console.log(JSON.stringify({ version: VERSION }));
   process.exit(0);
@@ -15,6 +15,6 @@ program
   .option("--pretty", "emit human-readable output")
   .option("--data-dir <path>", "override data directory");
 
-export { program };
+registerClients(program);
 
 program.parseAsync(process.argv);
