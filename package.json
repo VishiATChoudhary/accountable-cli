@@ -1,0 +1,27 @@
+{
+  "name": "freebies",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "freebies": "dist/cli.js" },
+  "scripts": {
+    "build": "tsc && cp -r src/db/migrations dist/db/migrations",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "commander": "^12.0.0",
+    "fast-xml-parser": "^4.4.0",
+    "pdfkit": "^0.15.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "@types/pdfkit": "^0.13.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

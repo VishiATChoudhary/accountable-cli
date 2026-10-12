@@ -1,0 +1,6 @@
+<Document><BkToCstmrStmt><Stmt>
+  <Ntry><Amt Ccy="EUR">50.00</Amt><CdtDbtInd>DBIT</CdtDbtInd><BookgDt><Dt>2026-02-01</Dt></BookgDt>
+    <NtryDtls><TxDtls><RmtInf><Ustrd>Hosting</Ustrd></RmtInf><RltdPties><Cdtr><Nm>AWS</Nm></Cdtr></RltdPties></TxDtls></NtryDtls></Ntry>
+  <Ntry><Amt Ccy="EUR">1234.56</Amt><CdtDbtInd>CRDT</CdtDbtInd><BookgDt><Dt>2026-02-02</Dt></BookgDt>
+    <NtryDtls><TxDtls><RmtInf><Ustrd>Rechnung 2026-0001</Ustrd></RmtInf><RltdPties><Dbtr><Nm>ACME GmbH</Nm></Dbtr></RltdPties></TxDtls></NtryDtls></Ntry>
+</Stmt></BkToCstmrStmt></Document>
