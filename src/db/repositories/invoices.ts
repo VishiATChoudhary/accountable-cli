@@ -23,6 +23,10 @@ export class InvoicesRepo {
   create(input: CreateInvoiceInput): Invoice {
     const client = this.db.prepare("SELECT id FROM clients WHERE id=?").get(input.client_id);
     if (!client) throw new AppError("NOT_FOUND", `client not found: ${input.client_id}`, 1);
+    const biz = this.db.prepare("SELECT value FROM meta WHERE key='business'").get() as { value: string } | undefined;
+    if (biz && JSON.parse(biz.value).kleinunternehmer && input.items.some((i) => i.vat_bp > 0)) {
+      throw new AppError("KLEINUNTERNEHMER_VAT", "As a Kleinunternehmer (§ 19 UStG) you can't charge VAT. Set every item's VAT to 0.", 1);
+    }
     const year = input.issue_date.slice(0, 4);
     const create = this.db.transaction((): Invoice => {
       const inv: Invoice = {

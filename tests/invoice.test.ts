@@ -33,3 +33,18 @@ describe("invoices", () => {
     expect(b.number).toBe("2026-0002");
   });
 });
+
+describe("kleinunternehmer guard", () => {
+  it("refuses VAT on invoices when the business is a Kleinunternehmer", async () => {
+    const { BusinessRepo } = await import("../src/db/repositories/business.js");
+    const { db, client } = ctx();
+    new BusinessRepo(db).set({ kleinunternehmer: true });
+    const repo = new InvoicesRepo(db);
+    try {
+      repo.create({ client_id: client.id, issue_date: "2026-01-01", items: [{ description: "x", quantity: 1000, unit_price_cents: 100, vat_bp: 1900 }] });
+      expect.fail("should throw");
+    } catch (e: any) { expect(e.code).toBe("KLEINUNTERNEHMER_VAT"); }
+    const ok = repo.create({ client_id: client.id, issue_date: "2026-01-01", items: [{ description: "x", quantity: 1000, unit_price_cents: 100, vat_bp: 0 }] });
+    expect(ok.number).toBe("2026-0001");
+  });
+});

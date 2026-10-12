@@ -58,6 +58,8 @@ export function prepareAction(db: Database.Database, raw: unknown): Prepared {
     }
     case "invoice.create": {
       if (!!p.client_id === !!p.new_client) return fail("invoice.create: give exactly one of client_id or new_client");
+      const biz = db.prepare("SELECT value FROM meta WHERE key='business'").get() as { value: string } | undefined;
+      if (biz && JSON.parse(biz.value).kleinunternehmer && p.items.some((i: any) => i.vat_bp > 0)) return fail("invoice.create: the business is a Kleinunternehmer (§ 19 UStG), so every item needs vat_bp 0");
       let label: string;
       if (p.client_id) {
         const name = clientName(db, p.client_id);
