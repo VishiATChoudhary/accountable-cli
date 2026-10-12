@@ -1,0 +1,11 @@
+CREATE TABLE clients (id TEXT PRIMARY KEY, name TEXT NOT NULL, address TEXT, country TEXT, vat_id TEXT, email TEXT, created_at TEXT NOT NULL);
+CREATE TABLE invoices (id TEXT PRIMARY KEY, number TEXT UNIQUE NOT NULL, client_id TEXT NOT NULL, issue_date TEXT NOT NULL, due_date TEXT, status TEXT NOT NULL, currency TEXT NOT NULL DEFAULT 'EUR', notes TEXT, created_at TEXT NOT NULL);
+CREATE TABLE invoice_items (id TEXT PRIMARY KEY, invoice_id TEXT NOT NULL, description TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price_cents INTEGER NOT NULL, vat_bp INTEGER NOT NULL, position INTEGER NOT NULL);
+CREATE TABLE quotes (id TEXT PRIMARY KEY, number TEXT UNIQUE NOT NULL, client_id TEXT NOT NULL, issue_date TEXT NOT NULL, status TEXT NOT NULL, currency TEXT NOT NULL DEFAULT 'EUR', notes TEXT, created_at TEXT NOT NULL);
+CREATE TABLE quote_items (id TEXT PRIMARY KEY, quote_id TEXT NOT NULL, description TEXT NOT NULL, quantity INTEGER NOT NULL, unit_price_cents INTEGER NOT NULL, vat_bp INTEGER NOT NULL, position INTEGER NOT NULL);
+CREATE TABLE expenses (id TEXT PRIMARY KEY, date TEXT NOT NULL, supplier TEXT, description TEXT, net_cents INTEGER NOT NULL, vat_bp INTEGER NOT NULL, category TEXT, receipt_path TEXT, created_at TEXT NOT NULL);
+CREATE TABLE transactions (id TEXT PRIMARY KEY, booking_date TEXT NOT NULL, value_date TEXT, amount_cents INTEGER NOT NULL, currency TEXT NOT NULL DEFAULT 'EUR', counterparty TEXT, reference TEXT, raw TEXT, import_batch_id TEXT, status TEXT NOT NULL DEFAULT 'unclassified', category TEXT, created_at TEXT NOT NULL);
+CREATE TABLE tx_links (id TEXT PRIMARY KEY, transaction_id TEXT NOT NULL, target_type TEXT NOT NULL, target_id TEXT NOT NULL);
+CREATE TABLE import_batches (id TEXT PRIMARY KEY, source TEXT NOT NULL, filename TEXT, imported_at TEXT NOT NULL, row_count INTEGER NOT NULL);
+CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+INSERT INTO meta (key, value) VALUES ('schema_version', '1'), ('invoice_number_sequence', '0'), ('quote_number_sequence', '0');
