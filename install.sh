@@ -8,7 +8,8 @@ INK='\033[48;2;11;57;134m\033[38;2;244;235;216m'
 RESET='\033[0m'
 DIM='\033[2m'
 BOLD='\033[1m'
-PKG="${FREEBIES_PACKAGE:-freebies}"
+REPO="VishiATChoudhary/freebies"
+RELEASE_TGZ="https://github.com/$REPO/releases/latest/download/freebies.tgz"
 
 say() { printf '%b\n' "$*"; }
 badge() { printf '%b' "${INK} ✺ freebies ${RESET}"; }
@@ -22,6 +23,15 @@ command -v node >/dev/null 2>&1 || fail "Node.js isn't installed." "Install Node
 NODE_MAJOR=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)
 [ "$NODE_MAJOR" -ge 22 ] 2>/dev/null || fail "freebies needs Node.js 22 or newer; you have $(node -v)." "Update Node (https://nodejs.org, or: brew upgrade node) and run this again."
 command -v npm >/dev/null 2>&1 || fail "npm isn't available." "It ships with Node.js; reinstall Node from https://nodejs.org."
+
+# Use the npm package only if it really is this project; otherwise the GitHub release.
+if [ -n "$FREEBIES_PACKAGE" ]; then
+  PKG="$FREEBIES_PACKAGE"
+elif npm view freebies repository.url 2>/dev/null | grep -q "$REPO"; then
+  PKG="freebies"
+else
+  PKG="$RELEASE_TGZ"
+fi
 
 say "  ${DIM}installing with npm…${RESET}"
 if ! npm install --global --no-fund --no-audit --loglevel=error "$PKG"; then
