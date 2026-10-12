@@ -1,0 +1,4 @@
+CREATE TABLE chat_sessions (id TEXT PRIMARY KEY, claude_session_id TEXT, title TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE chat_messages (id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE, role TEXT NOT NULL, content TEXT NOT NULL, meta TEXT, created_at TEXT NOT NULL, seq INTEGER NOT NULL);
+CREATE TABLE agent_actions (id TEXT PRIMARY KEY, session_id TEXT NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE, message_id TEXT, kind TEXT NOT NULL, payload TEXT NOT NULL, summary TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', result TEXT, notified INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, resolved_at TEXT);
+CREATE TABLE uploads (id TEXT PRIMARY KEY, filename TEXT NOT NULL, path TEXT NOT NULL, mime TEXT NOT NULL, size INTEGER NOT NULL, created_at TEXT NOT NULL);
