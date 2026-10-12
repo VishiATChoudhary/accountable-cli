@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { VERSION } from "./version.js";
 import { registerClients } from "./commands/clients.js";
 import { registerInvoices } from "./commands/invoices.js";
+import { registerQuotes } from "./commands/quotes.js";
 
 if (process.argv.includes("--version")) {
   console.log(JSON.stringify({ version: VERSION }));
@@ -18,5 +19,6 @@ program
 
 registerClients(program);
 registerInvoices(program);
+registerQuotes(program);
 
 program.parseAsync(process.argv);
