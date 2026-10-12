@@ -53,7 +53,7 @@ export function createApp(opts: { dataDir: string; runTurn: RunTurn; webDist?: s
     return c.json({ error: { code: "INTERNAL", message: err.message } }, 500);
   });
 
-  app.get("/api/health", (c) => c.json({ ok: true }));
+  app.get("/api/health", (c) => c.json({ ok: true, dataDir: opts.dataDir }));
 
   // Customers
   const clientBody = SCHEMAS["client.create"];
@@ -76,6 +76,11 @@ export function createApp(opts: { dataDir: string; runTurn: RunTurn; webDist?: s
     const body = parse(SCHEMAS["invoice.create"], await c.req.json());
     if (!body.client_id) throw new AppError("BAD_INPUT", "client_id is required", 1);
     return c.json(invoiceView(new InvoicesRepo(db).create(body as any).id), 201);
+  });
+  app.post("/api/invoices/:id/status", async (c) => {
+    const { status } = parse(SCHEMAS["invoice.status"].pick({ status: true }), await c.req.json());
+    new InvoicesRepo(db).setStatus(c.req.param("id"), status);
+    return c.json(invoiceView(c.req.param("id")));
   });
   app.get("/api/invoices/:id/pdf", async (c) => {
     const inv = new InvoicesRepo(db).get(c.req.param("id"));

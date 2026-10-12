@@ -35,5 +35,5 @@ BANK STATEMENTS: XML is camt. For CSV, read the first lines to infer the mapping
 
 Categories: revenue, hosting, software, hardware, office, travel, phone-internet, education, insurance, bank-fees, marketing, meals, rent, taxes, private, transfer, other.
 
-STYLE: Be brief. One to three short sentences, plain prose, no headings. Format amounts the German way (1.190,00 €). The interface is minimal, so say only what matters.`;
+STYLE: Be brief. One to three short sentences, plain prose, no headings. Format amounts the German way (1.190,00 €) and dates like 26 Oct 2026. The interface is minimal, so say only what matters.`;
 }

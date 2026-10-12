@@ -90,3 +90,15 @@ describe("api", () => {
     expect(await (await app.request("/api/business")).json()).toMatchObject({ name: "Max Mustermann", kleinunternehmer: true });
   });
 });
+
+describe("api extras", () => {
+  it("changes invoice status and reports the data dir", async () => {
+    const { app, dir } = mk();
+    const c = await (await app.request("/api/clients", json({ name: "ACME" }))).json();
+    const inv = await (await app.request("/api/invoices", json({ client_id: c.id, issue_date: "2026-10-12", items: [{ description: "W", quantity: 1000, unit_price_cents: 100, vat_bp: 0 }] }))).json();
+    const r = await (await app.request(`/api/invoices/${inv.id}/status`, json({ status: "paid" }))).json();
+    expect(r.status).toBe("paid");
+    expect((await app.request(`/api/invoices/${inv.id}/status`, json({ status: "lost" }))).status).toBe(400);
+    expect((await (await app.request("/api/health")).json()).dataDir).toBe(dir);
+  });
+});

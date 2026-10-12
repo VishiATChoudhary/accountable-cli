@@ -19,6 +19,23 @@ npm run build        # outputs dist/, installs the `freebies` bin
 
 During development, run without building via `npm run dev -- <args>` or `npx tsx src/cli.ts <args>`.
 
+## App
+
+A local web app sits on the same data as the CLI.
+
+```sh
+npm run ui:dev     # development: http://127.0.0.1:5173 (API on 4317)
+npm run ui         # build once and serve everything on http://127.0.0.1:4317
+```
+
+- **Agent.** Chat with Claude about your books. Drop a receipt (PDF or photo) or a bank statement (CSV or CAMT.053) into the chat. Claude reads it and proposes the change.
+- **Nothing is written without you.** Every create or change appears as a card with Confirm and Cancel. Several changes at once collapse into one list with "Confirm all".
+- **Tabs.** Invoices (open, change status, download PDF), Customers (add, edit), Expenses (receipt preview), Bank (transactions, one-click sorting), Settings (your details for invoices).
+
+The agent runs the `claude` CLI you are already logged into. It is isolated: project settings only, no MCP servers, only Bash, Read and Glob, and Bash is limited to the read-only `bin/freebies-ro`. The server only listens on 127.0.0.1.
+
+`scripts/seed-demo.sh /tmp/fb-demo` fills a throwaway folder with sample data. Run the app against it with `FREEBIES_DATA_DIR=/tmp/fb-demo npm run ui:dev`.
+
 ## Data location
 
 Everything is stored locally under `$XDG_DATA_HOME/freebies` (default `~/.local/share/freebies`): a SQLite database and a `files/` directory for receipts and generated PDFs. Override with `--data-dir <path>` or `FREEBIES_DATA_DIR`.

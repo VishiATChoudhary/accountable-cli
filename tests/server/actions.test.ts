@@ -19,7 +19,7 @@ function setup() {
 describe("formatEuro", () => {
   it("uses German grouping and decimals", () => {
     expect(formatEuro(119000).replace(/\s/g, " ")).toBe("1.190,00 €");
-    expect(formatEuro(-5000).replace(/\s/g, " ")).toBe("-50,00 €");
+    expect(formatEuro(-5000).replace(/\s/g, " ")).toBe("\u221250,00 €");
   });
 });
 

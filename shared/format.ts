@@ -1,5 +1,6 @@
 const EUR = new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" });
-export const formatEuro = (cents: number): string => EUR.format(cents / 100);
+// Typographic minus instead of a hyphen for negative amounts.
+export const formatEuro = (cents: number): string => EUR.format(cents / 100).replace(/^-/, "\u2212");
 
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "";

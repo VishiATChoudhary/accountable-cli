@@ -6,11 +6,11 @@ import { fail } from "../output/errors.js";
 
 export function registerClients(program: Command): void {
   const g = program.command("clients").description("manage clients");
-  g.command("add").requiredOption("--name <name>").option("--vat-id <v>").option("--email <e>").option("--address <a>")
+  g.command("add").requiredOption("--name <name>").option("--vat-id <v>").option("--email <e>").option("--address <a>").option("--country <c>")
     .action((o) => {
       try {
         const ctx = loadContext(program.opts());
-        emit(new ClientsRepo(ctx.db).add({ name: o.name, vat_id: o.vatId, email: o.email, address: o.address }), ctx);
+        emit(new ClientsRepo(ctx.db).add({ name: o.name, vat_id: o.vatId, email: o.email, address: o.address, country: o.country }), ctx);
       } catch (e) { fail(e); }
     });
   g.command("list").action(() => { try { const ctx = loadContext(program.opts()); emit(new ClientsRepo(ctx.db).list(), ctx); } catch (e) { fail(e); } });
