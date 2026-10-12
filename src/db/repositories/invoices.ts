@@ -24,21 +24,21 @@ export class InvoicesRepo {
     const client = this.db.prepare("SELECT id FROM clients WHERE id=?").get(input.client_id);
     if (!client) throw new AppError("NOT_FOUND", `client not found: ${input.client_id}`, 1);
     const year = input.issue_date.slice(0, 4);
-    const inv: Invoice = {
-      id: newId(), number: nextNumber(this.db, "invoice_number_sequence", year),
-      client_id: input.client_id, issue_date: input.issue_date, due_date: input.due_date,
-      status: "draft", currency: "EUR", notes: input.notes, created_at: new Date().toISOString(),
-    };
-    const tx = this.db.transaction(() => {
+    const create = this.db.transaction((): Invoice => {
+      const inv: Invoice = {
+        id: newId(), number: nextNumber(this.db, "invoice_number_sequence", year),
+        client_id: input.client_id, issue_date: input.issue_date, due_date: input.due_date,
+        status: "draft", currency: "EUR", notes: input.notes, created_at: new Date().toISOString(),
+      };
       this.db.prepare("INSERT INTO invoices (id,number,client_id,issue_date,due_date,status,currency,notes,created_at) VALUES (@id,@number,@client_id,@issue_date,@due_date,@status,@currency,@notes,@created_at)")
         .run({ due_date: null, notes: null, ...inv });
       input.items.forEach((it, idx) => {
         this.db.prepare("INSERT INTO invoice_items (id,invoice_id,description,quantity,unit_price_cents,vat_bp,position) VALUES (?,?,?,?,?,?,?)")
           .run(newId(), inv.id, it.description, it.quantity, it.unit_price_cents, it.vat_bp, idx);
       });
+      return inv;
     });
-    tx();
-    return inv;
+    return create();
   }
   get(id: string): Invoice & { items: InvoiceItemInput[] } {
     const inv = this.db.prepare("SELECT * FROM invoices WHERE id=?").get(id) as Invoice | undefined;
@@ -47,6 +47,12 @@ export class InvoicesRepo {
     return { ...inv, items };
   }
   list(): Invoice[] { return this.db.prepare("SELECT * FROM invoices ORDER BY number").all() as Invoice[]; }
+  edit(id: string, patch: { due_date?: string; notes?: string; issue_date?: string }): Invoice & { items: InvoiceItemInput[] } {
+    const cur = this.get(id);
+    const next = { due_date: patch.due_date ?? cur.due_date ?? null, notes: patch.notes ?? cur.notes ?? null, issue_date: patch.issue_date ?? cur.issue_date, id };
+    this.db.prepare("UPDATE invoices SET due_date=@due_date, notes=@notes, issue_date=@issue_date WHERE id=@id").run(next);
+    return this.get(id);
+  }
   setStatus(id: string, status: string): Invoice {
     if (!INVOICE_STATUSES.includes(status as InvoiceStatus)) throw new AppError("BAD_STATUS", `invalid status: ${status}`, 1);
     const r = this.db.prepare("UPDATE invoices SET status=? WHERE id=?").run(status, id);

@@ -32,11 +32,15 @@ Every command accepts `--json` (default when output is not a terminal) and print
 ```sh
 freebies init                                   # create data dir + database
 
+freebies business set --name "Max Mustermann" --address "Hauptstr 1, Berlin" --tax-number 12/345/67890 --kleinunternehmer true
+freebies business get                           # your own identity, printed on invoices
+
 freebies clients add --name "ACME GmbH" --vat-id DE123
-freebies clients list | get <id> | rm <id>
+freebies clients list | get <id> | edit <id> --address "Berlin" | rm <id>
 
 freebies invoices create --from invoice.json    # see shape below
 freebies invoices list | get <id>
+freebies invoices edit <id> --notes "..." --due-date 2026-02-01
 freebies invoices status <id> paid              # draft|sent|paid|void
 freebies invoices pdf <id> [--out path.pdf]
 
@@ -45,7 +49,7 @@ freebies quotes list | get <id> | accept <id>
 freebies quotes to-invoice <id>
 
 freebies expenses add --date 2026-03-01 --net 50,00 --vat 1900 --supplier AWS --category hosting
-freebies expenses list | get <id> | rm <id>
+freebies expenses list | get <id> | edit <id> --category hosting | rm <id>
 freebies expenses attach <id> receipt.pdf
 
 freebies tx import --file export.csv --format csv --map mapping.json

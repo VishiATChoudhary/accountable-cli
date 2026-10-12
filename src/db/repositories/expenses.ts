@@ -1,5 +1,5 @@
 import type Database from "better-sqlite3";
-import { copyFileSync } from "node:fs";
+import { copyFileSync, existsSync } from "node:fs";
 import { join, basename } from "node:path";
 import { newId } from "../id.js";
 import { AppError } from "../../output/errors.js";
@@ -27,6 +27,7 @@ export class ExpensesRepo {
   }
   remove(id: string): void { const r = this.db.prepare("DELETE FROM expenses WHERE id=?").run(id); if (r.changes === 0) throw new AppError("NOT_FOUND", `expense not found: ${id}`, 1, { id }); }
   attach(id: string, srcPath: string, dataDir: string): Expense {
+    if (!existsSync(srcPath)) throw new AppError("BAD_INPUT", `receipt file not found: ${srcPath}`, 1, { path: srcPath });
     const dest = join(dataDir, "files", `${id}-${basename(srcPath)}`);
     copyFileSync(srcPath, dest);
     return this.edit(id, { receipt_path: dest });

@@ -11,6 +11,8 @@ export function registerExpenses(program: Command): void {
     .action((o) => { try { const ctx = loadContext(program.opts()); emit(new ExpensesRepo(ctx.db).add({ date: o.date, net_cents: parseEuroToCents(o.net), vat_bp: parseInt(o.vat, 10), supplier: o.supplier, description: o.description, category: o.category }), ctx); } catch (e) { fail(e); } });
   g.command("list").action(() => { try { const ctx = loadContext(program.opts()); emit(new ExpensesRepo(ctx.db).list(), ctx); } catch (e) { fail(e); } });
   g.command("get <id>").action((id) => { try { const ctx = loadContext(program.opts()); emit(new ExpensesRepo(ctx.db).get(id), ctx); } catch (e) { fail(e); } });
+  g.command("edit <id>").option("--date <d>").option("--net <amount>").option("--vat <bp>").option("--supplier <s>").option("--description <d>").option("--category <c>")
+    .action((id, o) => { try { const ctx = loadContext(program.opts()); const patch: any = {}; if (o.date !== undefined) patch.date = o.date; if (o.net !== undefined) patch.net_cents = parseEuroToCents(o.net); if (o.vat !== undefined) patch.vat_bp = parseInt(o.vat, 10); if (o.supplier !== undefined) patch.supplier = o.supplier; if (o.description !== undefined) patch.description = o.description; if (o.category !== undefined) patch.category = o.category; emit(new ExpensesRepo(ctx.db).edit(id, patch), ctx); } catch (e) { fail(e); } });
   g.command("rm <id>").action((id) => { try { const ctx = loadContext(program.opts()); new ExpensesRepo(ctx.db).remove(id); emit({ ok: true }, ctx); } catch (e) { fail(e); } });
   g.command("attach <id> <file>").action((id, file) => { try { const ctx = loadContext(program.opts()); emit(new ExpensesRepo(ctx.db).attach(id, file, ctx.dataDir), ctx); } catch (e) { fail(e); } });
 }

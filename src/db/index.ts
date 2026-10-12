@@ -16,11 +16,16 @@ export function openDb(dataDir: string): Database.Database {
   const db = new Database(join(dataDir, "freebies.db"));
   db.pragma("journal_mode = WAL");
   db.pragma("foreign_keys = ON");
+  db.exec("CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)");
   const migDir = join(dirname(fileURLToPath(import.meta.url)), "migrations");
-  const metaExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='meta'").get();
+  const done = new Set((db.prepare("SELECT name FROM schema_migrations").all() as { name: string }[]).map((r) => r.name));
   for (const f of readdirSync(migDir).filter((f) => f.endsWith(".sql")).sort()) {
-    if (metaExists && f === "001_init.sql") continue;
-    db.exec(readFileSync(join(migDir, f), "utf8"));
+    if (done.has(f)) continue;
+    const apply = db.transaction(() => {
+      db.exec(readFileSync(join(migDir, f), "utf8"));
+      db.prepare("INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)").run(f, new Date().toISOString());
+    });
+    apply();
   }
   return db;
 }

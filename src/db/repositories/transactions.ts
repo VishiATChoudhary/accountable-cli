@@ -33,9 +33,16 @@ export class TransactionsRepo {
   }
   setStatus(id: string, status: string): Transaction { const r = this.db.prepare("UPDATE transactions SET status=? WHERE id=?").run(status, id); if (r.changes === 0) throw new AppError("NOT_FOUND", `transaction not found: ${id}`, 1, { id }); return this.get(id); }
   link(txId: string, targetType: "invoice" | "expense", targetId: string): Transaction {
-    this.get(txId);
-    this.db.prepare("INSERT INTO tx_links (id,transaction_id,target_type,target_id) VALUES (?,?,?,?)").run(newId(), txId, targetType, targetId);
-    this.db.prepare("UPDATE transactions SET status='classified' WHERE id=?").run(txId);
+    const t = this.get(txId);
+    if (t.status === "classified") throw new AppError("ALREADY_CLASSIFIED", `transaction already classified: ${txId}`, 1, { id: txId });
+    const table = targetType === "invoice" ? "invoices" : "expenses";
+    const target = this.db.prepare(`SELECT id FROM ${table} WHERE id=?`).get(targetId);
+    if (!target) throw new AppError("NOT_FOUND", `${targetType} not found: ${targetId}`, 1, { id: targetId });
+    const run = this.db.transaction(() => {
+      this.db.prepare("INSERT INTO tx_links (id,transaction_id,target_type,target_id) VALUES (?,?,?,?)").run(newId(), txId, targetType, targetId);
+      this.db.prepare("UPDATE transactions SET status='classified' WHERE id=?").run(txId);
+    });
+    run();
     return this.get(txId);
   }
 }

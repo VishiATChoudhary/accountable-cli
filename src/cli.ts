@@ -5,6 +5,7 @@ import { registerInvoices } from "./commands/invoices.js";
 import { registerQuotes } from "./commands/quotes.js";
 import { registerExpenses } from "./commands/expenses.js";
 import { registerTx } from "./commands/tx.js";
+import { registerBusiness } from "./commands/business.js";
 import { loadContext } from "./context.js";
 import { emit } from "./output/render.js";
 import { fail } from "./output/errors.js";
@@ -30,5 +31,6 @@ registerInvoices(program);
 registerQuotes(program);
 registerExpenses(program);
 registerTx(program);
+registerBusiness(program);
 
 program.parseAsync(process.argv);

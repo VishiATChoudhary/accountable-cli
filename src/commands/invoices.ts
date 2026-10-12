@@ -32,10 +32,14 @@ export function registerInvoices(program: Command): void {
         const inv = new InvoicesRepo(ctx.db).get(id);
         const { ClientsRepo } = await import("../db/repositories/clients.js");
         const client = new ClientsRepo(ctx.db).get(inv.client_id);
+        const { BusinessRepo } = await import("../db/repositories/business.js");
+        const business = new BusinessRepo(ctx.db).get();
         const out = o.out ?? `${ctx.dataDir}/files/${inv.number}.pdf`;
         const { renderInvoicePdf } = await import("../pdf/invoice.js");
-        await renderInvoicePdf(inv, client, out);
+        await renderInvoicePdf(inv, client, out, business);
         emit({ path: out }, ctx);
       } catch (e) { fail(e); }
     });
+  g.command("edit <id>").option("--due-date <d>").option("--notes <n>").option("--issue-date <d>")
+    .action((id, o) => { try { const ctx = loadContext(program.opts()); emit(new InvoicesRepo(ctx.db).edit(id, { due_date: o.dueDate, notes: o.notes, issue_date: o.issueDate }), ctx); } catch (e) { fail(e); } });
 }

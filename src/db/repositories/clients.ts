@@ -31,7 +31,10 @@ export class ClientsRepo {
     return next;
   }
   remove(id: string): void {
-    const r = this.db.prepare("DELETE FROM clients WHERE id=?").run(id);
-    if (r.changes === 0) throw new AppError("NOT_FOUND", `client not found: ${id}`, 1, { id });
+    this.get(id);
+    const invCount = (this.db.prepare("SELECT COUNT(*) c FROM invoices WHERE client_id=?").get(id) as { c: number }).c;
+    const quoteCount = (this.db.prepare("SELECT COUNT(*) c FROM quotes WHERE client_id=?").get(id) as { c: number }).c;
+    if (invCount + quoteCount > 0) throw new AppError("IN_USE", `client is referenced by ${invCount} invoice(s) and ${quoteCount} quote(s)`, 1, { id, invoices: invCount, quotes: quoteCount });
+    this.db.prepare("DELETE FROM clients WHERE id=?").run(id);
   }
 }
