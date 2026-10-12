@@ -1,4 +1,4 @@
-// Invoice PDF in the freebies look: cream paper, cobalt ink, EB Garamond,
+// Invoice PDF in the freebies look: white page, cobalt ink, EB Garamond,
 // small-caps labels, ruled tables, and an engraved landscape at the foot of each page.
 import PDFDocument from "pdfkit";
 import * as fontkit from "fontkit";
@@ -14,8 +14,8 @@ import { formatEuro } from "../../shared/format.js";
 import { engraving } from "../../shared/engraving.js";
 
 const INK = "#0B3986";
-const PAPER = "#F4EBD8";
-const PAPER_LIFT = "#FAF4E6";
+const PAPER = "#F4EBD8";      // cream, for text on cobalt bands
+const PAGE = "#FFFFFF";       // white page: prints cleanly, no ink on the background
 const W = 595.28, H = 841.89;
 const M = 56;                  // side margin
 const CW = W - 2 * M;          // content width
@@ -117,11 +117,11 @@ export function renderInvoicePdf(
 
     // ---- page furniture ----
     const art = engraving({ width: W, height: BAND, seed: 4, tufts: 70, layers: 4, peak: 1.1 });
-    const background = () => doc.save().rect(0, 0, W, H).fill(PAPER).restore();
+    const background = () => doc.save().rect(0, 0, W, H).fill(PAGE).restore();
     const band = () => {
       doc.save().translate(0, H - BAND);
       for (const l of art.layers) {
-        doc.path(l.fill).fill(PAPER);
+        doc.path(l.fill).fill(PAGE);
         doc.save().path(l.fill).clip();
         doc.lineWidth(l.w).strokeColor(INK).strokeOpacity(l.o).lineCap("round");
         for (const d of l.hatch) doc.path(d).stroke();
