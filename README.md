@@ -1,4 +1,4 @@
-# accountable-cli
+# freebies
 
 Open source CLI for [Accountable](https://www.accountable.de), the freelancer invoicing and tax-filing app (invoices, UStVA, EÜR, income tax).
 
@@ -13,7 +13,7 @@ Accountable has no public API. This project reverse engineers the web and mobile
 
 ```sh
 git clone --recurse-submodules <this-repo>
-cd accountable-cli
+cd freebies
 npx rea-agents setup
 ```
 
