@@ -11,13 +11,28 @@ Accountable's subscription mainly buys tax calculation and filing to the Finanza
 ## Install
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/VishiATChoudhary/freebies/main/install.sh | sh
+```
+
+or, with Node.js 22 or newer:
+
+```sh
+npm install -g freebies
+```
+
+Then run `freebies`. The first launch walks you through setting up the details that go on your invoices. After that, `freebies` opens a home screen with your open invoices and unsorted bank transactions, and `freebies app` opens the web app.
+
+The agent needs [Claude Code](https://claude.com/claude-code) installed and logged in. Everything else works without it.
+
+### From source
+
+```sh
 git clone --recurse-submodules https://github.com/VishiATChoudhary/freebies.git
 cd freebies
 npm install
-npm run build        # outputs dist/, installs the `freebies` bin
+npm run build        # bundles the CLI into dist/ and the web app into web/dist/
+node dist/cli.js     # or: npx tsx src/cli.ts
 ```
-
-During development, run without building via `npm run dev -- <args>` or `npx tsx src/cli.ts <args>`.
 
 ## App
 

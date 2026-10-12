@@ -1,11 +1,11 @@
 import { serve } from "@hono/node-server";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { createApp } from "./app.js";
 import { createRunner } from "./agent/runner.js";
 import { resolveDataDir } from "../src/db/index.js";
+import { packageRoot } from "../src/paths.js";
 
-const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = packageRoot();
 const dataDir = resolveDataDir();
 const port = Number(process.env.PORT ?? 4317);
 const production = process.env.NODE_ENV === "production";

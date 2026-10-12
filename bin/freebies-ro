@@ -1,3 +1,14 @@
 #!/bin/sh
-DIR="$(cd "$(dirname "$0")" && pwd)"
-exec node --import tsx "$DIR/freebies-ro.ts" "$@"
+# Read-only freebies for the in-app agent. Uses the bundled build when installed,
+# the TypeScript source when running from a checkout.
+SELF="$0"
+# npm links global bins through symlinks; resolve them to find the package.
+while [ -L "$SELF" ]; do
+  LINK="$(readlink "$SELF")"
+  case "$LINK" in /*) SELF="$LINK" ;; *) SELF="$(dirname "$SELF")/$LINK" ;; esac
+done
+DIR="$(cd "$(dirname "$SELF")" && pwd)"
+if [ -f "$DIR/freebies-ro.ts" ] && [ -d "$DIR/../node_modules/tsx" ]; then
+  exec node --import tsx "$DIR/freebies-ro.ts" "$@"
+fi
+exec node "$DIR/../dist/freebies-ro.js" "$@"

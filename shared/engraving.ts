@@ -5,7 +5,7 @@
 
 export interface EngravingLayer { id: string; fill: string; ridge: string; hatch: string[]; shade: string[]; w: number; o: number }
 export interface EngravingArt { layers: EngravingLayer[]; grass: string[] }
-export interface EngravingOptions { width: number; height: number; seed?: number; tufts?: number; layers?: number; peak?: number }
+export interface EngravingOptions { width: number; height: number; seed?: number; tufts?: number; layers?: number; peak?: number; hatchScale?: number }
 
 function rng(seed: number) {
   return () => {
@@ -19,7 +19,7 @@ function rng(seed: number) {
 type Pt = readonly [number, number];
 const path = (pts: Pt[]) => pts.map(([x, y], j) => `${j ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join("");
 
-export function engraving({ width: W, height: H, seed = 7, tufts = 40, layers = 4, peak = 1 }: EngravingOptions): EngravingArt {
+export function engraving({ width: W, height: H, seed = 7, tufts = 40, layers = 4, peak = 1, hatchScale = 1 }: EngravingOptions): EngravingArt {
   const r = rng(seed);
   const step = 3;
   const xs: number[] = [];
@@ -44,7 +44,7 @@ export function engraving({ width: W, height: H, seed = 7, tufts = 40, layers = 
     const fill = `${path(ridge)}L${W + step} ${H + 2}L${-step} ${H + 2}Z`;
 
     const hatch: string[] = [];
-    const n = Math.round(14 + (1 - depth) * 26);
+    const n = Math.max(2, Math.round((14 + (1 - depth) * 26) * hatchScale));
     for (let k = 1; k <= n; k++) {
       const t = Math.pow(k / n, 1.55);
       const pts = ridge.map(([x, y]) => [x, y + t * (H - y) + Math.sin(x * 0.05 + k) * 0.4] as const);

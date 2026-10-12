@@ -1,39 +1,70 @@
 {
   "name": "freebies",
   "version": "0.1.0",
+  "description": "Local-first bookkeeping for German freelancers: invoices, receipts, bank imports, and a Claude agent. A free alternative to paid freelancer tax apps.",
+  "keywords": [
+    "invoice",
+    "rechnung",
+    "bookkeeping",
+    "freelancer",
+    "germany",
+    "ustva",
+    "elster",
+    "claude",
+    "cli",
+    "tui"
+  ],
+  "license": "MIT",
+  "author": "Vishisht Choudhary",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VishiATChoudhary/freebies.git"
+  },
+  "homepage": "https://github.com/VishiATChoudhary/freebies#readme",
   "type": "module",
   "bin": {
-    "freebies": "dist/cli.js"
+    "freebies": "dist/cli.js",
+    "freebies-ro": "bin/freebies-ro"
+  },
+  "files": [
+    "dist",
+    "web/dist",
+    "assets",
+    "bin/freebies-ro",
+    ".claude/skills",
+    "install.sh",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
   },
   "scripts": {
-    "build": "tsc && cp -r src/db/migrations dist/db/migrations",
+    "build": "node scripts/build.mjs && vite build",
     "dev": "tsx src/cli.ts",
     "test": "vitest run",
-    "lint": "tsc --noEmit",
+    "lint": "tsc --noEmit && tsc -p web/tsconfig.json",
     "ui:dev": "concurrently -k -n api,web -c blue,gray \"tsx watch server/index.ts\" \"vite\"",
+    "ui:build": "vite build",
     "ui": "vite build && NODE_ENV=production tsx server/index.ts",
-    "ui:build": "vite build"
+    "prepublishOnly": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
-    "@fontsource/eb-garamond": "^5.3.0",
     "@hono/node-server": "^2.1.4",
-    "@tanstack/react-query": "^5.104.2",
     "better-sqlite3": "^11.0.0",
     "commander": "^12.0.0",
     "fast-xml-parser": "^4.4.0",
     "fontkit": "^2.0.4",
     "hono": "^4.13.13",
-    "lucide-react": "^1.55.0",
-    "motion": "^14.1.0",
+    "ink": "^8.0.0",
     "pdfkit": "^0.15.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1",
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@fontsource/eb-garamond": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
+    "@tanstack/react-query": "^5.104.2",
     "@types/better-sqlite3": "^7.6.0",
     "@types/fontkit": "^2.0.9",
     "@types/node": "^22.0.0",
@@ -42,6 +73,13 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.1.2",
     "concurrently": "^9.0.0",
+    "esbuild": "^0.28.2",
+    "ink-testing-library": "^4.0.0",
+    "lucide-react": "^1.55.0",
+    "motion": "^14.1.0",
+    "react-dom": "^19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.16.0",
     "typescript": "^5.5.0",
