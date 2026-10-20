@@ -2,16 +2,16 @@ import { describe, it, expect } from "vitest";
 import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { renderInvoicePdf } from "../src/pdf/invoice.js";
+import { renderInvoicePdf, TEMPLATES } from "../src/pdf/invoice.js";
 import { engraving } from "../shared/engraving.js";
 
 const item = (n: number) => ({ description: `Work package ${n}`, quantity: 1000, unit_price_cents: 10000, vat_bp: 1900 });
 const invoice = (items: any[]) => ({ id: "x", number: "2026-0001", client_id: "c", issue_date: "2026-10-12", due_date: "2026-10-26", status: "draft", currency: "EUR", created_at: "", items } as any);
 const business = { name: "Vishi Choudhary", address: "Torstraße 12, 10119 Berlin", tax_number: "34/567/89012", vat_id: "DE312345678", iban: "DE89 3704 0044 0532 0130 00", email: "hi@vishi.de" };
 
-async function render(items: any[], clientName = "ACME GmbH", biz: any = business) {
+async function render(items: any[], clientName = "ACME GmbH", biz: any = business, opts = {}) {
   const out = join(mkdtempSync(join(tmpdir(), "fb-")), "inv.pdf");
-  await renderInvoicePdf(invoice(items), { name: clientName, address: "Berlin" } as any, out, biz);
+  await renderInvoicePdf(invoice(items), { name: clientName, address: "Berlin" } as any, out, biz, opts);
   return readFileSync(out);
 }
 const pages = (buf: Buffer) => (buf.toString("latin1").match(/\/Type \/Page[^s]/g) ?? []).length;
@@ -36,6 +36,29 @@ describe("invoice pdf", () => {
   });
   it("renders without any business details set", async () => {
     expect(pages(await render([item(1)], "ACME", {}))).toBe(1);
+  });
+});
+
+describe("invoice templates", () => {
+  for (const template of TEMPLATES) for (const lang of ["de", "en"]) {
+    it(`${template} (${lang}) fits one invoice on a page and breaks long ones`, async () => {
+      expect(pages(await render([item(1)], "ACME GmbH", business, { template, lang }))).toBe(1);
+      expect(pages(await render(Array.from({ length: 60 }, (_, i) => item(i + 1)), "ACME GmbH", business, { template, lang }))).toBeGreaterThan(1);
+    });
+  }
+  it("sans templates fall back to EB Garamond for glyphs outside WinAnsi", async () => {
+    const latin = await render([item(1)], "ACME GmbH", business, { template: "classic" });
+    const ext = await render([item(1)], "Łukasz Dvořák s.r.o.", business, { template: "classic" });
+    expect(fonts(latin).size).toBe(0);
+    expect(fonts(ext).size).toBeGreaterThan(0);
+  });
+  it("uses the business default template, and an explicit option wins", async () => {
+    expect(fonts(await render([item(1)], "ACME", { ...business, invoice_template: "minimal" })).size).toBe(0);
+    expect(fonts(await render([item(1)], "ACME", { ...business, invoice_template: "minimal" }, { template: "engraved" })).size).toBeGreaterThan(0);
+  });
+  it("rejects unknown templates and languages", async () => {
+    await expect(render([item(1)], "ACME", business, { template: "fancy" })).rejects.toThrow(/unknown template/);
+    await expect(render([item(1)], "ACME", business, { lang: "fr" })).rejects.toThrow(/unknown language/);
   });
 });
 

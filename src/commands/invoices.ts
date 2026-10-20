@@ -25,7 +25,7 @@ export function registerInvoices(program: Command): void {
   g.command("list").action(() => { try { const ctx = loadContext(program.opts()); emit(new InvoicesRepo(ctx.db).list(), ctx); } catch (e) { fail(e); } });
   g.command("get <id>").action((id) => { try { const ctx = loadContext(program.opts()); const r = new InvoicesRepo(ctx.db); const inv = r.get(id); emit({ ...inv, totals: invoiceTotals(inv.items) }, ctx); } catch (e) { fail(e); } });
   g.command("status <id> <status>").action((id, status) => { try { const ctx = loadContext(program.opts()); emit(new InvoicesRepo(ctx.db).setStatus(id, status), ctx); } catch (e) { fail(e); } });
-  g.command("pdf <id>").option("--out <path>")
+  g.command("pdf <id>").option("--out <path>").option("--template <t>", "engraved, classic, minimal or bold (default: business setting)").option("--lang <l>", "de or en (default: business setting)")
     .action(async (id, o) => {
       try {
         const ctx = loadContext(program.opts());
@@ -36,7 +36,7 @@ export function registerInvoices(program: Command): void {
         const business = new BusinessRepo(ctx.db).get();
         const out = o.out ?? `${ctx.dataDir}/files/${inv.number}.pdf`;
         const { renderInvoicePdf } = await import("../pdf/invoice.js");
-        await renderInvoicePdf(inv, client, out, business);
+        await renderInvoicePdf(inv, client, out, business, { template: o.template, lang: o.lang });
         emit({ path: out }, ctx);
       } catch (e) { fail(e); }
     });

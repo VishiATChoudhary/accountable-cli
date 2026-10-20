@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { api, type Business } from "../lib/api";
-import { Area, Field, PageHeader, ShimmerRows } from "../components/ui";
+import { api, PDF_TEMPLATES, type Business } from "../lib/api";
+import { Area, Field, PageHeader, Segmented, ShimmerRows } from "../components/ui";
 
 export function Settings() {
   const qc = useQueryClient();
@@ -55,6 +55,17 @@ export function Settings() {
             <motion.span className={`absolute top-[3px] h-5 w-5 rounded-full ${form.kleinunternehmer ? "bg-paper" : "bg-ink"}`} animate={{ left: form.kleinunternehmer ? 24 : 3 }} transition={{ type: "spring", stiffness: 500, damping: 34 }} />
           </button>
         </label>
+        <div className="flex flex-wrap items-center justify-between gap-4 py-2">
+          <span>
+            <span className="block">Invoice template</span>
+            <span className="ink-muted text-[0.95rem] italic">Default look for PDFs, change it per download too</span>
+          </span>
+          <Segmented layoutId="invoice-template" value={form.invoice_template ?? "engraved"} onChange={(v) => update({ invoice_template: v })} options={PDF_TEMPLATES.map((t) => ({ value: t, label: t }))} />
+        </div>
+        <div className="flex items-center justify-between gap-4 py-2">
+          <span className="block">Invoice language</span>
+          <Segmented layoutId="invoice-lang" value={form.invoice_lang ?? "de"} onChange={(v) => update({ invoice_lang: v })} options={[{ value: "de", label: "deutsch" }, { value: "en", label: "english" }]} />
+        </div>
         <div className="flex items-center gap-4 pt-2">
           <AnimatePresence>{saved && <motion.span className="italic" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>Saved</motion.span>}</AnimatePresence>
         </div>

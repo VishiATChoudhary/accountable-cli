@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Plus } from "lucide-react";
+import { Download, Eye, Plus } from "lucide-react";
 import { useState } from "react";
-import { api, type Invoice } from "../lib/api";
+import { api, PDF_TEMPLATES, type Invoice, type PdfLang, type PdfTemplate } from "../lib/api";
 import { formatDate, formatEuro } from "../../../shared/format";
 import { Button, Drawer, Empty, PageHeader, Segmented, ShimmerRows } from "../components/ui";
 
@@ -10,6 +10,10 @@ const STATUSES: Invoice["status"][] = ["draft", "sent", "paid", "void"];
 function Detail({ id }: { id: string }) {
   const qc = useQueryClient();
   const { data: inv } = useQuery({ queryKey: ["invoice", id], queryFn: () => api.invoice(id) });
+  const { data: business } = useQuery({ queryKey: ["business"], queryFn: api.business });
+  const [template, setTemplate] = useState<PdfTemplate | null>(null);
+  const [lang, setLang] = useState<PdfLang | null>(null);
+  const pdf = { template: template ?? business?.invoice_template ?? "engraved", lang: lang ?? business?.invoice_lang ?? "de" };
   const status = useMutation({
     mutationFn: (s: Invoice["status"]) => api.setInvoiceStatus(id, s),
     onSuccess: (v) => { qc.setQueryData(["invoice", id], v); qc.invalidateQueries({ queryKey: ["invoices"] }); },
@@ -35,9 +39,18 @@ function Detail({ id }: { id: string }) {
         <div className="num flex justify-between pt-1 text-[1.1rem]"><span className="sc">total</span><span>{formatEuro(inv.gross_cents)}</span></div>
       </div>
       {inv.notes && <p className="italic ink-muted">{inv.notes}</p>}
-      <a href={api.invoicePdfUrl(id)} className="inline-flex h-10 items-center gap-2 rounded-[3px] bg-ink px-5 text-paper transition-colors hover:bg-ink-deep">
-        <Download size={16} strokeWidth={1.5} /> Download PDF
-      </a>
+      <div className="space-y-3">
+        <Segmented layoutId={`template-${id}`} value={pdf.template} onChange={setTemplate} options={PDF_TEMPLATES.map((t) => ({ value: t, label: t }))} />
+        <Segmented layoutId={`lang-${id}`} value={pdf.lang} onChange={setLang} options={[{ value: "de", label: "deutsch" }, { value: "en", label: "english" }]} />
+        <div className="flex gap-3">
+          <a href={api.invoicePdfUrl(id, pdf)} className="inline-flex h-10 items-center gap-2 rounded-[3px] bg-ink px-5 text-paper transition-colors hover:bg-ink-deep">
+            <Download size={16} strokeWidth={1.5} /> Download PDF
+          </a>
+          <a href={api.invoicePdfUrl(id, { ...pdf, inline: true })} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-[3px] border border-ink px-5 transition-colors hover:bg-ink/[0.06]">
+            <Eye size={16} strokeWidth={1.5} /> Preview
+          </a>
+        </div>
+      </div>
     </div>
   );
 }

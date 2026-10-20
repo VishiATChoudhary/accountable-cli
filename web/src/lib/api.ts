@@ -17,7 +17,10 @@ export interface InvoiceItem { description: string; quantity: number; unit_price
 export interface Invoice { id: string; number: string; client_id: string; client_name: string; issue_date: string; due_date: string | null; status: "draft" | "sent" | "paid" | "void"; notes: string | null; net_cents: number; vat_cents: number; gross_cents: number; items?: InvoiceItem[]; }
 export interface Expense { id: string; date: string; supplier: string | null; description: string | null; net_cents: number; vat_bp: number; gross_cents: number; category: string | null; has_receipt: boolean; }
 export interface Transaction { id: string; booking_date: string; amount_cents: number; counterparty: string | null; reference: string | null; status: "unclassified" | "classified" | "ignored"; category: string | null; }
-export interface Business { name?: string; address?: string; vat_id?: string; tax_number?: string; email?: string; iban?: string; bic?: string; owner?: string; account_holder?: string; kleinunternehmer?: boolean; }
+export interface Business { name?: string; address?: string; vat_id?: string; tax_number?: string; email?: string; iban?: string; bic?: string; owner?: string; account_holder?: string; kleinunternehmer?: boolean; invoice_template?: PdfTemplate; invoice_lang?: PdfLang; }
+export const PDF_TEMPLATES = ["engraved", "classic", "minimal", "bold"] as const;
+export type PdfTemplate = (typeof PDF_TEMPLATES)[number];
+export type PdfLang = "de" | "en";
 export interface Upload { id: string; filename: string; mime: string; size: number; }
 export interface AgentAction { id: string; session_id: string; message_id: string | null; kind: string; payload: any; summary: string; status: "pending" | "confirmed" | "rejected" | "failed"; result: any; }
 export interface ChatMessage { id: string; role: "user" | "assistant"; content: string; meta: any; created_at: string; }
@@ -32,7 +35,8 @@ export const api = {
   invoices: () => req<Invoice[]>("/api/invoices"),
   invoice: (id: string) => req<Invoice>(`/api/invoices/${id}`),
   setInvoiceStatus: (id: string, status: Invoice["status"]) => req<Invoice>(`/api/invoices/${id}/status`, send("POST", { status })),
-  invoicePdfUrl: (id: string) => `/api/invoices/${id}/pdf`,
+  invoicePdfUrl: (id: string, o: { template?: PdfTemplate; lang?: PdfLang; inline?: boolean } = {}) =>
+    `/api/invoices/${id}/pdf?${new URLSearchParams({ ...(o.template && { template: o.template }), ...(o.lang && { lang: o.lang }), ...(o.inline && { inline: "1" }) })}`,
   expenses: () => req<Expense[]>("/api/expenses"),
   receiptUrl: (id: string) => `/api/expenses/${id}/receipt`,
   transactions: () => req<Transaction[]>("/api/transactions"),

@@ -17,6 +17,7 @@ import { UploadsRepo } from "../src/db/repositories/uploads.js";
 import { invoiceTotals } from "../src/domain/invoice.js";
 import { grossCents } from "../src/domain/money.js";
 import { renderInvoicePdf } from "../src/pdf/invoice.js";
+import { LANGS, TEMPLATES } from "../src/pdf/common.js";
 import { AppError } from "../src/output/errors.js";
 import { handleChatTurn, type RunTurn } from "./agent/chat.js";
 import { prepareAction, executeAction, SCHEMAS } from "./agent/actions.js";
@@ -85,8 +86,10 @@ export function createApp(opts: { dataDir: string; runTurn: RunTurn; webDist?: s
   app.get("/api/invoices/:id/pdf", async (c) => {
     const inv = new InvoicesRepo(db).get(c.req.param("id"));
     const out = join(filesDir, `${inv.number}.pdf`);
-    await renderInvoicePdf(inv, new ClientsRepo(db).get(inv.client_id), out, new BusinessRepo(db).get());
-    return new Response(readFileSync(out), { headers: { "content-type": "application/pdf", "content-disposition": `attachment; filename="${inv.number}.pdf"` } });
+    const { template, lang, inline } = c.req.query();
+    try { await renderInvoicePdf(inv, new ClientsRepo(db).get(inv.client_id), out, new BusinessRepo(db).get(), { template, lang }); }
+    catch (e) { throw /^unknown (template|language)/.test((e as Error).message) ? new AppError("BAD_INPUT", (e as Error).message, 1) : e; }
+    return new Response(readFileSync(out), { headers: { "content-type": "application/pdf", "content-disposition": `${inline ? "inline" : "attachment"}; filename="${inv.number}.pdf"` } });
   });
 
   // Expenses
@@ -106,7 +109,7 @@ export function createApp(opts: { dataDir: string; runTurn: RunTurn; webDist?: s
   // Business identity
   app.get("/api/business", (c) => c.json(new BusinessRepo(db).get()));
   app.put("/api/business", async (c) => {
-    const body = parse(z.object({ name: z.string().optional(), address: z.string().optional(), vat_id: z.string().optional(), tax_number: z.string().optional(), email: z.string().optional(), iban: z.string().optional(), bic: z.string().optional(), owner: z.string().optional(), account_holder: z.string().optional(), kleinunternehmer: z.boolean().optional() }).strict(), await c.req.json());
+    const body = parse(z.object({ name: z.string().optional(), address: z.string().optional(), vat_id: z.string().optional(), tax_number: z.string().optional(), email: z.string().optional(), iban: z.string().optional(), bic: z.string().optional(), owner: z.string().optional(), account_holder: z.string().optional(), kleinunternehmer: z.boolean().optional(), invoice_template: z.enum(TEMPLATES).optional(), invoice_lang: z.enum(LANGS).optional() }).strict(), await c.req.json());
     return c.json(new BusinessRepo(db).set(body));
   });
 

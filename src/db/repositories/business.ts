@@ -5,6 +5,7 @@ export interface Business {
   email?: string; iban?: string; bic?: string; kleinunternehmer?: boolean;
   /** Person behind a trading name, printed under it. */ owner?: string;
   /** Name on the bank account; defaults to owner, then name. */ account_holder?: string;
+  /** Default PDF template and language for invoices. */ invoice_template?: string; invoice_lang?: string;
 }
 
 export class BusinessRepo {
